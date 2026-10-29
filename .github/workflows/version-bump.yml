@@ -1,0 +1,62 @@
+name: Version bump
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: version-bump-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  bump:
+    if: github.event.pull_request.head.repo.full_name == github.repository && !github.event.pull_request.draft
+    runs-on: ubuntu-latest
+    env:
+      BASE_REF: ${{ github.event.pull_request.base.ref }}
+      HEAD_REF: ${{ github.event.pull_request.head.ref }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Check out source branch
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Bump VERSION on source branch
+        id: bump
+        run: |
+          set -euo pipefail
+          base_version="$(git show "origin/${BASE_REF}:VERSION" | tr -d '[:space:]')"
+          head_version="$(tr -d '[:space:]' < VERSION)"
+          if ! [[ "$base_version" =~ ^[0-9]+$ && "$head_version" =~ ^[0-9]+$ ]]; then
+            echo "::error::VERSION must hold a non-negative integer (${BASE_REF}: '${base_version}', ${HEAD_REF}: '${head_version}')"
+            exit 1
+          fi
+          next_version=$((base_version + 1))
+          echo "version=${next_version}" >> "$GITHUB_OUTPUT"
+          if [ "$head_version" -eq "$next_version" ]; then
+            echo "VERSION on ${HEAD_REF} is already ${next_version}"
+            exit 0
+          fi
+          if [ "$head_version" -ne "$base_version" ]; then
+            echo "::error::VERSION on ${HEAD_REF} is ${head_version}; expected ${base_version} (to bump) or ${next_version} (already bumped)"
+            exit 1
+          fi
+          printf '%s' "$next_version" > VERSION
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add VERSION
+          git commit -m "Bump version to ${next_version}"
+          git push origin "HEAD:refs/heads/${HEAD_REF}"
+
+      - name: Approve pull request
+        run: |
+          gh pr review "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --approve \
+            --body "VERSION is ${{ steps.bump.outputs.version }} on ${HEAD_REF}. Approved by the version bump workflow."
