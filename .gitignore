@@ -1,0 +1,65 @@
+# Repo-wide ignores. Stack-specific rules live in backend/, frontend/ and database/.
+
+# ---- Build / distribution output ----
+build/
+dist/
+out/
+coverage/
+*.log
+logs/
+tmp/
+temp/
+
+# ---- Secrets / local environment ----
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# ---- macOS ----
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# ---- Windows ----
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ---- Linux ----
+*~
+.directory
+.Trash-*
+
+# ---- JetBrains (IntelliJ, PyCharm, Android Studio) ----
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# ---- VS Code (keep shared settings) ----
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+.history/
+
+# ---- Vim / Emacs / Sublime ----
+*.swp
+*.swo
+*.swn
+[._]*.un~
+\#*\#
+.\#*
+*.sublime-project
+*.sublime-workspace
+
+# ---- Claude Code local settings ----
+.claude/settings.local.json

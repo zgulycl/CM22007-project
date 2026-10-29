@@ -1,0 +1,23 @@
+# PostgreSQL
+
+# ---- Local data directories (e.g. Docker volume mounts) ----
+pgdata/
+data/
+postgres-data/
+
+# ---- Dumps / backups (may contain real data) ----
+*.dump
+*.backup
+*.bak
+*.sql.gz
+*.tar.gz
+backups/
+
+# ---- Logs ----
+*.log
+
+# ---- Credentials ----
+.pgpass
+.env
+.env.*
+!.env.example
