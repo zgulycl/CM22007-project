@@ -8,6 +8,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  statuses: write
 
 concurrency:
   group: version-bump-${{ github.event.pull_request.number }}
@@ -20,9 +21,20 @@ jobs:
     env:
       BASE_REF: ${{ github.event.pull_request.base.ref }}
       HEAD_REF: ${{ github.event.pull_request.head.ref }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
       PR_NUMBER: ${{ github.event.pull_request.number }}
       GH_TOKEN: ${{ github.token }}
     steps:
+      - name: Require development as source branch
+        run: |
+          if [ "$HEAD_REF" != "development" ]; then
+            gh api "repos/${GITHUB_REPOSITORY}/statuses/${HEAD_SHA}" \
+              -f state=failure -f context=source-branch \
+              -f description="Only development may be merged into main"
+            echo "::error::Only development may be merged into main (source branch: ${HEAD_REF})"
+            exit 1
+          fi
+
       - name: Check out source branch
         uses: actions/checkout@v5
         with:
@@ -55,6 +67,12 @@ jobs:
           git add VERSION
           git commit -m "Bump version to ${next_version}"
           git push origin "HEAD:refs/heads/${HEAD_REF}"
+
+      - name: Mark source branch check as passed
+        run: |
+          gh api "repos/${GITHUB_REPOSITORY}/statuses/$(git rev-parse HEAD)" \
+            -f state=success -f context=source-branch \
+            -f description="Source branch is development"
 
       - name: Approve pull request
         run: |

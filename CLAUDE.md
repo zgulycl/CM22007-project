@@ -29,6 +29,7 @@ CM22007 group project. Only the backend has been scaffolded so far: a minimal Fa
 
 - `main` is protected and only receives pull requests, normally from `development`, which is branched from `main`. Work happens on `development` or on branches off it.
 - `.github/workflows/version-bump.yml` runs on every pull request into `main`. It sets `VERSION` on the source branch to main's `VERSION` + 1, commits that as `github-actions[bot]`, and approves the PR. Re-runs are no-ops once the bump is in place. It fails if `VERSION` on the branch is anything other than main's value or main's value + 1.
+- The same workflow enforces that only `development` can be merged into `main`. It posts a `source-branch` commit status: `failure` for any other source branch, and `success` on the final head commit (including the bot's bump commit, which GitHub runs no workflows for). The `main` ruleset requires `source-branch`, and admins may bypass it.
 - After that bot commit, pull `development` before pushing again, or the push is rejected.
 
 ## Make targets
